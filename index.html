@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Oei</title>
+    <style>
+        /* CSS: ส่วนของการตกแต่ง */
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #ffe6e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 90%;
+            width: 400px;
+            position: relative;
+            min-height: 400px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1, h2, p {
+            color: #d63384;
+        }
+
+        /* สไตล์ปุ่มกด */
+        .btn {
+            padding: 12px 24px;
+            margin: 10px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            white-space: normal; /* อนุญาตให้ข้อความขึ้นบรรทัดใหม่ได้ถ้ายาวเกิน */
+            line-height: 1.4;
+        }
+
+        .btn-primary {
+            background-color: #ff4d6d;
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 77, 109, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background-color: #ff3355;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #c9c9c9;
+            color: white;
+        }
+
+        /* Video Player Container */
+        #visual-player {
+            width: 100%;
+            max-width: 280px;
+            border-radius: 15px;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            height: 300px; 
+            overflow: hidden;
+        }
+
+        /* พื้นที่แสดงข้อความ */
+        #text-container {
+            height: 60px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            flex-direction: column;
+        }
+
+        /* ข้อความที่จะค่อยๆ ขึ้นมา */
+        .message-text {
+            display: none; 
+            font-size: 20px;
+            font-weight: bold;
+            color: #d63384;
+            opacity: 0;
+            transition: opacity 1s ease-in-out; 
+            position: absolute; 
+        }
+
+        .visible {
+            opacity: 1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ปุ่มสุดท้าย (ยาวหน่อย) */
+        #btn-final-next {
+            opacity: 0;
+            transition: opacity 1s;
+            font-weight: bold;
+            max-width: 90%; /* กันปุ่มล้นจอ */
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container" id="content-area">
+        <div id="scene-1" style="width: 100%;">
+            <h1>มีอะไรจะบอก</h1>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <button id="btn-next" class="btn btn-primary" onclick="goToImage()">ไปต่อ</button>
+                <button id="btn-stop" class="btn btn-secondary" onclick="growButton()">หยุดแค่นี้</button>
+            </div>
+        </div>
+
+        <div id="scene-2" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <p id="click-hint" style="font-size: 12px; color: #aaa; margin-bottom: 10px;">(รอดูวิดีโอนะ)</p>
+            
+            <div id="visual-player"></div>
+            
+            <div id="text-container">
+                <p class="message-text" id="msg-1">ตั้งใจทำให้เลยนะะ</p>
+                <p class="message-text" id="msg-2">คือแบบเค้าอยากชัดเจนกับเอย</p>
+                <p class="message-text" id="msg-3">ถึงขั้นนี้แล้วเค้าไม่อยากหยุดแค่นี้</p>
+                
+                <button id="btn-final-next" class="btn btn-primary hidden" onclick="exitWeb()">
+                    ลองพิมในแชทเค้าว่า KLA ดูสิ
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- YouTube Player Container (Hidden) -->
+    <div id="player" style="display:none;"></div>
+
+    <script>
+        // --- ส่วนควบคุมปุ่มขยาย ---
+        let stopCount = 0;
+        const btnNext = document.getElementById('btn-next');
+        const btnStop = document.getElementById('btn-stop');
+
+        function growButton() {
+            stopCount++;
+            let currentSize = parseFloat(window.getComputedStyle(btnNext).fontSize);
+            let currentPadding = parseFloat(window.getComputedStyle(btnNext).paddingTop);
+            
+            btnNext.style.fontSize = (currentSize * 1.3) + "px";
+            btnNext.style.padding = (currentPadding * 1.2) + "px " + (currentPadding * 2 * 1.2) + "px";
+            
+            if(stopCount === 1) btnStop.innerText = "แน่ใจหรอ?";
+            if(stopCount === 3) btnStop.innerText = "อย่าหยุดเลย";
+            if(stopCount === 4) btnStop.innerText = "ไม่ให้หยุด";
+
+            if (stopCount >= 5) {
+                btnStop.style.display = 'none';
+                btnNext.style.fontSize = "30px";
+                btnNext.innerText = "ไปกันต่อ";
+            }
+        }
+
+        function goToImage() {
+            document.getElementById('scene-1').classList.add('hidden');
+            document.getElementById('scene-2').classList.remove('hidden');
+            document.getElementById('scene-2').style.display = 'flex'; 
+            
+            startVideoSequence(); // เริ่มวิดีโอ
+            startSequence(); // เริ่มข้อความ
+            
+            // เล่นเพลง (เผื่อยังไม่ได้เล่น)
+            if (player && player.playVideo) {
+                player.playVideo();
+            }
+        }
+
+        // --- Video Sequence Logic ---
+        var playerVisual;
+        
+        function startVideoSequence() {
+            // Video 1: QWFbqO6z-GY (8 วินาที)
+            if(playerVisual) {
+                playerVisual.loadVideoById({'videoId': 'QWFbqO6z-GY'});
+                
+                setTimeout(() => {
+                    // Video 2: zfCgk7iEeNc (5 วินาที)
+                    playerVisual.loadVideoById({'videoId': 'zfCgk7iEeNc'});
+                    
+                    setTimeout(() => {
+                        // Video 3: 2hT7u55Fh5w (Loop)
+                        playerVisual.loadVideoById({'videoId': '2hT7u55Fh5w'});
+                        playerVisual.setLoop(true);
+                    }, 5000); // รอ 5 วิ
+                    
+                }, 8000); // รอ 8 วิ
+            }
+        }
+
+        // --- ส่วนควบคุมข้อความ (Sequence) ---
+        let isPlaying = false;
+
+        function startSequence() {
+            if (isPlaying) return;
+            isPlaying = true;
+
+            document.getElementById('click-hint').style.display = 'none';
+            
+            // ลำดับการแสดงข้อความ
+            playMessage('msg-1', 2500, () => {
+                playMessage('msg-2', 2500, () => {
+                    playMessage('msg-3', 3000, () => {
+                        showFinalButton();
+                    });
+                });
+            });
+        }
+
+        function playMessage(elementId, duration, callback) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.classList.add('visible');
+            }, 50);
+
+            setTimeout(() => {
+                el.classList.remove('visible'); // เฟดออก
+                setTimeout(() => {
+                    el.style.display = 'none';
+                    if (callback) callback();
+                }, 1000); 
+            }, duration);
+        }
+
+        function showFinalButton() {
+            const btn = document.getElementById('btn-final-next');
+            btn.classList.remove('hidden');
+            setTimeout(() => {
+                btn.style.opacity = '1';
+            }, 50);
+        }
+
+        function exitWeb() {
+            // พยายามปิดหน้าต่าง
+            window.close();
+            // ถ้าปิดไม่ได้ (เพราะ browser block) ให้ redirect ไปหน้าว่างๆ หรือหน้า Google
+            window.location.href = "https://www.google.com";
+        }
+
+        // --- YouTube API ---
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player;
+        function onYouTubeIframeAPIReady() {
+            // Player เพลง
+            player = new YT.Player('player', {
+                height: '0',
+                width: '0',
+                videoId: 'qBHUqGZX1_U',
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'start': 40,
+                    'loop': 1,
+                    'playlist': 'qBHUqGZX1_U'
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+
+            // Player วิดีโอ
+            playerVisual = new YT.Player('visual-player', {
+                height: '300',
+                width: '100%',
+                videoId: '', // เริ่มต้นว่างไว้ก่อน
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'modestbranding': 1,
+                    'fs': 0
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            event.target.playVideo(); // สั่งเล่นทันที
+        }
+
+        // Fallback: ถ้า browser block autoplay ให้เล่นเมื่อกดที่ใดก็ได้ในหน้าเว็บ
+        document.body.addEventListener('click', function() {
+            if (player && player.getPlayerState() !== 1) {
+                player.playVideo();
+            }
+        });
+
+    </script>
+</body>
+</html>
